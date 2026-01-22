@@ -1,19 +1,37 @@
-from typing import Optional, Dict
+import logging
+from typing import Optional, Dict, TypeVar, Type
 
 import requests
 import urllib3.util.retry
+from pydantic import BaseModel
 from requests.adapters import HTTPAdapter
 
 from app.config.config_manager import ConfigManager
+from app.constant.ap_type import HttpRequestType
 
-
+logger = logging.getLogger(__name__)
+T = TypeVar('T', bound=BaseModel)
 class ApHttpClient:
     def __init__(self, base_url: str = "", timeout: int = 10, max_retries: int = 3):
         self.base_url = base_url
         self.timeout = timeout
         self.session = self._generate_session(max_retries)
 
-    def request(self, method: str, endpoint: str, params: Optional[Dict] = None, data: Optional[Dict] = None,
+    def request(self, ivo_class: Type[T], params: Optional[Dict] = None, data: Optional[Dict] = None,
+                json: Optional[Dict] = None, headers: Optional[Dict] = None,
+                stream: bool = False) -> requests.Response:
+
+        # GET 요청일 때 enm 쿼리 파라미터 추가
+        if ivo_class.METHOD == HttpRequestType.GET.name:
+            # 기존 params에 enm 추가
+            if params is None:
+                params = {}
+            params['enm'] = ivo_class.__name__
+
+        return self._request(ivo_class.METHOD, ivo_class.URI, params, data, json, headers, stream)
+
+
+    def _request(self, method: str, endpoint: str, params: Optional[Dict] = None, data: Optional[Dict] = None,
                 json: Optional[Dict] = None, headers: Optional[Dict] = None, stream: bool = False) -> requests.Response:
         url = f"{self.base_url}{endpoint}"
 

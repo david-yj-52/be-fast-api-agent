@@ -13,7 +13,7 @@ class ConfigManager(BaseSettings):
     AP_NAME: str
     AP_VERSION: str
     AP_PORT: int
-
+    URI_PREFIX: str
     LOADER_BASE_URL: str
     SQLITE_DB_NAME: str
 
