@@ -1,11 +1,14 @@
+import importlib
 import logging
 import os.path
+import pkgutil
 
 from platformdirs import user_data_dir
 
 from app.config.config_manager import ConfigManager
-from app.database.sqlite_session import Base, db_helper
+from app.config.sqlite_session import Base, db_helper
 from app.service.loader_health_check_service import LoaderHealthCheck
+import app.dao as dao_package
 
 logger = logging.getLogger(__name__)
 
@@ -48,8 +51,15 @@ class ServiceStartActivator():
         logger.info(f"apDir: {self.appDir} baseDir: {self.baseDir} dataPath: {self.data_path}")
 
     async def _setup_database(self):
+        self.import_submodules(dao_package)
+
         async with db_helper.engine.begin() as conn:
             await conn.run_sync(Base.metadata.create_all)
+
+    def import_submodules(self, package):  # self 추가
+        """패키지 내의 모든 하위 모듈을 재귀적으로 임포트하여 Base에 등록함"""
+        for loader, module_name, is_pkg in pkgutil.walk_packages(package.__path__, package.__name__ + "."):
+            importlib.import_module(module_name)
 
 
 if __name__ == '__main__':

@@ -16,6 +16,7 @@ class InterfaceSystemType(Enum):
     AGENT = "Agent"
     LOADER = "Loader"
     SERVER = "Server"
+    UI = "Ui"
 
 
 class HttpRequestType(Enum):
